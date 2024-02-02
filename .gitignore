@@ -3,8 +3,8 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-index/
-data/
+/index/
+/data/
 
 ### IntelliJ IDEA ###
 .idea/modules.xml

@@ -11,9 +11,9 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.KeywordField;
 import org.apache.lucene.document.TextField;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,16 +26,16 @@ public class SrtSubtitleLoader {
         this.charset = charset;
     }
 
-    public List<Document> fromFile(String path) {
+    public List<Document> fromFile(File file) {
         List<Document> documents = new ArrayList<>();
         try {
             SrtParser parser = new SrtParser(this.charset);
-            SrtObject subtitle = parser.parse(Files.newInputStream(Paths.get(path)));
+            SrtObject subtitle = parser.parse(new FileInputStream(file));
 
             if(subtitle != null) {
                 for (SubtitleCue cue : subtitle.getCues()) {
                     Document doc = new Document();
-                    doc.add(new KeywordField("path", path, Field.Store.YES));
+                    doc.add(new KeywordField("path", file.getPath(), Field.Store.YES));
                     doc.add(new TextField("text", cue.getText(), Field.Store.YES));
                     doc.add(new TextField("start_time", cue.getStartTime().toString(), Field.Store.YES));
                     doc.add(new TextField("end_time", cue.getEndTime().toString(), Field.Store.YES));
