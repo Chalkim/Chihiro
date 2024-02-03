@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.chihiro.exception.InvalidDirectoryException;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 
 public class SubtitleScanner {
@@ -49,16 +50,17 @@ public class SubtitleScanner {
         return false;
     }
 
-    public List<File> scanDirectory(File directory) throws InvalidDirectoryException {
-        if (!directory.exists() || !directory.isDirectory()) {
-            throw new InvalidDirectoryException("Invalid directory: " + directory.getPath());
-        }
+    public List<Path> scanDirectory(Path directoryPath) throws InvalidDirectoryException {
+        File directory = directoryPath.toFile();
 
-        List<File> subtitleFiles = new LinkedList<>();
+        if (!directory.isDirectory()) {
+            throw new InvalidDirectoryException(directoryPath.toString());
+        }
 
         Queue<File> queue = new LinkedList<>();
         queue.add(directory);
 
+        List<Path> subtitleFilePaths = new LinkedList<>();
         while (!queue.isEmpty()) {
             File currentFolder = queue.poll();
             File[] files = currentFolder.listFiles();
@@ -67,24 +69,25 @@ public class SubtitleScanner {
                     if (recursive && file.isDirectory()) {
                         queue.add(file);
                     } else if (isSupportFormat(file)) {
-                        subtitleFiles.add(file);
+                        subtitleFilePaths.add(file.toPath());
                     } else {
                         log.warn("Unsupported format: " + file.getPath());
                     }
                 }
             }
         }
-        return subtitleFiles;
+
+        return subtitleFilePaths;
     }
 
-    public List<File> scanDirectories(List<File> directories) throws InvalidDirectoryException {
-        List<File> subtitleFiles = new LinkedList<>();
+    public List<Path> scanDirectories(List<Path> directoryPaths) throws InvalidDirectoryException {
+        List<Path> subtitleFilePaths = new LinkedList<>();
 
-        for (File directory : directories) {
-            List<File> files = scanDirectory(directory);
-            subtitleFiles.addAll(files);
+        for (Path path : directoryPaths) {
+            List<Path> files = scanDirectory(path);
+            subtitleFilePaths.addAll(files);
         }
 
-        return subtitleFiles;
+        return subtitleFilePaths;
     }
 }
