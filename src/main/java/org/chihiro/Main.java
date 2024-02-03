@@ -17,6 +17,7 @@ public class Main {
 
         try {
             ChihiroIndexer indexer = new ChihiroIndexer(indexDirectoryPath);
+            indexer.cleanIndex();
             indexer.addSubtitleDirectory(Path.of("./data"));
             indexer.makeSubtitleIndex();
         } catch (Exception e) {
@@ -25,10 +26,10 @@ public class Main {
 
         try {
             ChihiroSearch search = new ChihiroSearch(indexDirectoryPath);
-            List<Document> res = search.search("と同じ");
+            List<Document> res = search.search("カエル");
             for (Document doc : res) {
-                // split fields with space
-                String message = String.format("%s %s %s",
+                String message = String.format("Path: %s\n%s\t%s\n%s",
+                        doc.get("path"),
                         doc.get("start_time"), doc.get("end_time"), doc.get("text"));
                 log.info(message);
             }
