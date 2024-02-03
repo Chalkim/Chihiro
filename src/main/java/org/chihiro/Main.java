@@ -17,6 +17,7 @@ public class Main {
 
         try {
             ChihiroIndexer indexer = new ChihiroIndexer(indexDirectoryPath);
+            // TODO: watch directory for changes instead of reindexing everything
             indexer.cleanIndex();
             indexer.addSubtitleDirectory(Path.of("./data"));
             indexer.makeSubtitleIndex();
