@@ -9,41 +9,58 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.chihiro.analyzer.ChihiroAnalyzer;
 import org.chihiro.document.subtitle.SrtSubtitleLoader;
+import org.chihiro.exception.InvalidDirectoryException;
+import org.chihiro.index.scanner.SubtitleScanner;
 
 import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 public class ChihiroIndexer {
     private final Directory indexDirectory;
-    private ArrayList<String> documentDirectory;
+    private final LinkedList<Path> subtitleDirectoryPaths;
+    private final SubtitleScanner scanner;
 
     private static final Log log = LogFactory.getLog(SrtSubtitleLoader.class);
 
-    public ChihiroIndexer(String indexDirectory) throws IOException {
-        this.indexDirectory = FSDirectory.open(Paths.get(indexDirectory));
+    public ChihiroIndexer(Path indexDirectoryPath) throws IOException {
+        this.indexDirectory = FSDirectory.open(indexDirectoryPath);
+        this.subtitleDirectoryPaths = new LinkedList<>();
+        this.scanner = new SubtitleScanner(Arrays.asList("srt"), false);
     }
 
-    public void makeSubtitleIndex() throws IOException {
-        ChihiroAnalyzer analyzer = new ChihiroAnalyzer();
-        IndexWriterConfig config = new IndexWriterConfig(analyzer);
+    public void addSubtitleDirectory(Path directory) {
+        this.subtitleDirectoryPaths.add(directory);
+    }
+
+    public void makeSubtitleIndex() throws IOException, InvalidDirectoryException {
+        IndexWriterConfig config = new IndexWriterConfig(new ChihiroAnalyzer());
         IndexWriter writer = new IndexWriter(indexDirectory, config);
 
         SrtSubtitleLoader loader = new SrtSubtitleLoader("UTF-8");
-        String path = "./data/[LoliHouse] Higurashi no Naku Koro ni Gou - 01 [WebRip 1080p HEVC-10bit AAC SRTx4].srt";
-        List<Document> docs = loader.fromFile(path);
 
-        for (Document doc : docs) {
-            log.debug("Adding document to index" + doc);
-            writer.addDocument(doc);
+        List<Path> subtitles = scanner.scanDirectories(subtitleDirectoryPaths);
+
+        for(Path path : subtitles) {
+            List<Document> docs = loader.fromFile(path.toFile());
+
+            for (Document doc : docs) {
+                writer.addDocument(doc);
+            }
+            log.info("Indexed " + path + " (" + docs.size() + " documents)");
         }
-        // info
-        log.info("Committing index: " + path);
 
         writer.commit();
         writer.close();
+    }
 
-        analyzer.close();
+    public void cleanIndex() throws IOException {
+        IndexWriterConfig config = new IndexWriterConfig(new ChihiroAnalyzer());
+        IndexWriter writer = new IndexWriter(indexDirectory, config);
+        writer.deleteAll();
+        writer.commit();
+        writer.close();
     }
 }
