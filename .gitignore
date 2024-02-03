@@ -5,6 +5,7 @@ target/
 
 /index/
 /data/
+/logs/
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
