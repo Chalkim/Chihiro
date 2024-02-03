@@ -12,28 +12,27 @@ import org.chihiro.document.subtitle.SrtSubtitleLoader;
 import org.chihiro.exception.InvalidDirectoryException;
 import org.chihiro.index.scanner.SubtitleScanner;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
 public class ChihiroIndexer {
     private final Directory indexDirectory;
-    private final LinkedList<File> subtitleDirectories;
+    private final LinkedList<Path> subtitleDirectoryPaths;
     private final SubtitleScanner scanner;
 
     private static final Log log = LogFactory.getLog(SrtSubtitleLoader.class);
 
-    public ChihiroIndexer(String indexDirectory) throws IOException {
-        this.indexDirectory = FSDirectory.open(Paths.get(indexDirectory));
-        this.subtitleDirectories = new LinkedList<>();
+    public ChihiroIndexer(Path indexDirectoryPath) throws IOException {
+        this.indexDirectory = FSDirectory.open(indexDirectoryPath);
+        this.subtitleDirectoryPaths = new LinkedList<>();
         this.scanner = new SubtitleScanner(Arrays.asList("srt"), false);
     }
 
-    public void addSubtitleDirectory(File directory) {
-        subtitleDirectories.add(directory);
+    public void addSubtitleDirectory(Path directory) {
+        this.subtitleDirectoryPaths.add(directory);
     }
 
     public void makeSubtitleIndex() throws IOException, InvalidDirectoryException {
@@ -42,15 +41,15 @@ public class ChihiroIndexer {
 
         SrtSubtitleLoader loader = new SrtSubtitleLoader("UTF-8");
 
-        List<File> subtitles = scanner.scanDirectories(subtitleDirectories);
+        List<Path> subtitles = scanner.scanDirectories(subtitleDirectoryPaths);
 
-        for(File file : subtitles) {
-            List<Document> docs = loader.fromFile(file);
+        for(Path path : subtitles) {
+            List<Document> docs = loader.fromFile(path.toFile());
 
             for (Document doc : docs) {
                 writer.addDocument(doc);
             }
-            log.info("Indexed " + file.getPath() + " (" + docs.size() + " documents)");
+            log.info("Indexed " + path + " (" + docs.size() + " documents)");
         }
 
         writer.commit();

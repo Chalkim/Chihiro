@@ -6,7 +6,6 @@ import org.apache.lucene.document.Document;
 import org.chihiro.index.ChihiroIndexer;
 import org.chihiro.search.ChihiroSearch;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -14,16 +13,18 @@ public class Main {
     private static final Log log = LogFactory.getLog(Main.class);
 
     public static void main(String[] args) {
+        Path indexDirectoryPath = Path.of("./index");
+
         try {
-            ChihiroIndexer indexer = new ChihiroIndexer("index");
-            indexer.addSubtitleDirectory(new File("./data"));
+            ChihiroIndexer indexer = new ChihiroIndexer(indexDirectoryPath);
+            indexer.addSubtitleDirectory(Path.of("./data"));
             indexer.makeSubtitleIndex();
         } catch (Exception e) {
             log.error("Error making index", e);
         }
 
         try {
-            ChihiroSearch search = new ChihiroSearch(Path.of("./index"));
+            ChihiroSearch search = new ChihiroSearch(indexDirectoryPath);
             List<Document> res = search.search("と同じ");
             for (Document doc : res) {
                 // split fields with space
