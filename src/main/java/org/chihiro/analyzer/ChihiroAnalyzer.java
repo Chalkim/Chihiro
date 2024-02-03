@@ -1,33 +1,34 @@
 package org.chihiro.analyzer;
 
 import org.apache.lucene.analysis.*;
+import org.apache.lucene.analysis.cjk.CJKWidthFilter;
 import org.apache.lucene.analysis.ja.*;
-import org.apache.lucene.analysis.ja.dict.UserDictionary;
-
-import java.util.Set;
 
 
 public class ChihiroAnalyzer extends Analyzer {
     private final JapaneseTokenizer.Mode mode;
-    private final UserDictionary userDict;
 
     public ChihiroAnalyzer() {
-        this(null,
-                JapaneseTokenizer.DEFAULT_MODE);
+        this(JapaneseTokenizer.DEFAULT_MODE);
     }
 
-    public ChihiroAnalyzer(
-            UserDictionary userDict, JapaneseTokenizer.Mode mode) {
+    public ChihiroAnalyzer(JapaneseTokenizer.Mode mode) {
         super();
-        this.userDict = userDict;
         this.mode = mode;
     }
 
     @Override
     protected TokenStreamComponents createComponents(String fieldName) {
-        Tokenizer tokenizer = new JapaneseTokenizer(userDict, true, true, mode);
-        TokenStream stream = new JapaneseReadingFormFilter(tokenizer);
+        Tokenizer tokenizer = new JapaneseTokenizer(
+                null,
+                true,
+                true, mode
+        );
+
+        TokenStream stream = new JapaneseBaseFormFilter(tokenizer);
+        stream = new CJKWidthFilter(stream);
         stream = new JapaneseKatakanaStemFilter(stream);
+        stream = new JapaneseReadingFormFilter(stream, true);
         stream = new LowerCaseFilter(stream);
         return new TokenStreamComponents(tokenizer, stream);
     }
